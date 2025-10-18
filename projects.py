@@ -75,7 +75,7 @@ def tapsyrys_beru():
 
 def tapsyrys_koru():
     if not tapsyrys_tarihy:
-        print("\nПока ешқандай тапсырыс жоқ.")
+        print("\nӘзірше ешқандай тапсырыс жоқ.")
         return
 
     nomer = input("Тапсырыс нөмірін енгізіңіз: ")
@@ -120,3 +120,4 @@ while True:
 
     else:
         print("Қате таңдау. Қайта енгізіңіз.")
+
