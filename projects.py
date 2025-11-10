@@ -1,6 +1,9 @@
+
 import random
-restoran_atauy = "FitFood"
-print("Фитнес-ресторан:", restoran_atauy, "\n")
+from utils import add_record, delete_record
+
+FILENAME = "data.txt"
+
 MENYU = (
     ("Протеинді смузи", 180, "сүт, протеин, банан", 1200),
     ("Жасыл смузи", 150, "шпинат, алма, киви", 1100),
@@ -21,103 +24,169 @@ MENYU = (
     ("Авокадо салаты", 230, "авокадо, көкөніс, лимон", 1500),
     ("Йогурт смузи", 190, "йогурт, банан, жидектер", 1200)
 )
+
 tapsyrys_tarihy = {}
 
-def tapsyrys_beru():
+def load_from_file():
+    try:
+        with open(FILENAME, "r", encoding="utf-8") as f:
+            for line in f:
+                key, tagam_str, baga = line.strip().split("|")
+                tagamdar = [tuple(t.split(",")) for t in tagam_str.split(";")]
+                tapsyrys_tarihy[key] = {"tagamdar": tagamdar, "baga": int(baga)}
+    except FileNotFoundError:
+        pass
+
+def save_to_file():
+    with open(FILENAME, "w", encoding="utf-8") as f:
+        for key, val in tapsyrys_tarihy.items():
+            tagam_str = ";".join([f"{t[0]},{t[1]}" for t in val["tagamdar"]])
+            f.write(f"{key}|{tagam_str}|{val['baga']}\n")
+
+def bar_menudy_koru():
+    print("\nБарлық мәзір:")
+    for i, t in enumerate(MENYU, 1):
+        print(f"{i}. {t[0]} - {t[1]} ккал - {t[3]} тг | Құрамы: {t[2]}")
+
+def tagam_izdeu():
+    soz = input("Ізделетін тағамның атын немесе түрін жазыңыз: ").lower()
+    tabylgan = []
+    for i, t in enumerate(MENYU, 1):
+        if soz in t[0].lower() or soz in t[2].lower():
+            tabylgan.append((i, t))
+    if tabylgan:
+        print("Табылған тағамдар:")
+        for i, t in tabylgan:
+            print(f"{i}. {t[0]} - {t[1]} ккал - {t[3]} тг | Құрамы: {t[2]}")
+    else:
+        print("Мұндай тағам табылмады.")
+
+def tapsyrys_qosu():
     while True:
-        print("Меню:")
-        for i, tagam in enumerate(MENYU, 1):
-            print(i, tagam[0], "-", tagam[1], "kkal", "-", tagam[3], "tg", "| Құрамы:", tagam[2])
-
-        tapsyrys_nomerleri = input("Таңдаған тағамдардың нөмірлерін үтір арқылы жазыңыз: ")
-        tapsyrys_nomerleri = tapsyrys_nomerleri.split(",")
-        tapsyrys_tizimi = []
-
-        for n in tapsyrys_nomerleri:
-            tapsyrys_tizimi.append(n.strip())
-
+        bar_menudy_koru()
+        nums = input("Таңдаған тағамдардың нөмірін үтір арқылы жазыңыз: ").split(",")
         tapsyrys = []
-        jalpy_baga = 0
-        jalpy_kaloriya = 0
-
-        for n in tapsyrys_tizimi:
-            if n.isdigit():
-                indeks = int(n) - 1
-                if 0 <= indeks < len(MENYU):
-                    tapsyrys.append(MENYU[indeks])
-                    jalpy_baga += MENYU[indeks][3]
-                    jalpy_kaloriya += MENYU[indeks][1]
+        baga = 0
+        for n in nums:
+            try:
+                idx = int(n.strip()) - 1
+                if 0 <= idx < len(MENYU):
+                    tapsyrys.append(MENYU[idx])
+                    baga += MENYU[idx][3]
+            except:
+                continue
 
         if not tapsyrys:
-            print("Ешқандай тағам табылмады, қайта енгізіңіз.")
+            print("Ешқандай тағам таңдалмады. Қайта енгізіңіз.")
             continue
 
         print("\nСіздің тапсырысыңыз:")
-        for tagam in tapsyrys:
-            print("-", tagam[0], "-", tagam[1], "kkal", "-", tagam[3], "tg", "| Құрамы:", tagam[2])
-        print("Жалпы калория:", jalpy_kaloriya, "kkal")
-        print("Жалпы бағасы:", jalpy_baga, "tg")
+        for t in tapsyrys:
+            print("-", t[0], "-", t[1], "ккал -", t[3], "тг")
 
-        rastau = input("\nТапсырыс қабылдаймыз ба? (иә/жоқ): ").lower()
+        rastau = input("Тапсырысты растау керек пе? (иә/жоқ): ").lower()
         if rastau == "иә":
-            nomer = random.randint(1000, 9999)
-            dayyndau_uakyty = random.randint(5, 15)
-            tapsyrys_tarihy[nomer] = {
-                "tagamdar": [(t[0], t[3]) for t in tapsyrys],
-                "uakyty": dayyndau_uakyty,
-                "baga": jalpy_baga
-            }
-            print("Тапсырыс қабылданды! Нөмірі:", nomer)
-            print("Дайындалу уақыты шамамен", dayyndau_uakyty, "минут.")
+            nomer = str(random.randint(1000, 9999))
+            add_record(tapsyrys_tarihy, nomer, {"tagamdar": [(t[0], t[3]) for t in tapsyrys], "baga": baga})
+            save_to_file()
+            print(f"Тапсырыс қабылданды! Нөмірі: {nomer}, Жалпы баға: {baga} тг")
             break
         else:
-            print("Менюді қайта таңдаңыз.")
+            print("Тапсырыс беруді болдырмаймыз. Мәзірге қайта ораламыз.")
+            break
 
-def tapsyrys_koru():
-    if not tapsyrys_tarihy:
-        print("\nӘзірше ешқандай тапсырыс жоқ.")
-        return
+def tapsyrys_qosu():
+    while True:
+        bar_menudy_koru()
+        nums = input("Таңдаған тағамдардың нөмірін үтір арқылы жазыңыз: ").split(",")
+        tapsyrys = []
+        baga = 0
+        for n in nums:
+            try:
+                idx = int(n.strip()) - 1
+                if 0 <= idx < len(MENYU):
+                    tapsyrys.append(MENYU[idx])
+                    baga += MENYU[idx][3]
+            except:
+                continue
 
-    nomer = input("Тапсырыс нөмірін енгізіңіз: ")
-    if nomer.isdigit():
-        nomer = int(nomer)
-        if nomer in tapsyrys_tarihy:
-            info = tapsyrys_tarihy[nomer]
-            print("\nТапсырыс №", nomer)
-            print("Таңдалған тағамдар:")
-            for tagam_ati, bagasy in info["tagamdar"]:
-                print("-", tagam_ati, "-", bagasy, "tg")
-            print("Жалпы бағасы:", info["baga"], "tg")
-            print("Қалған уақыт шамамен:", random.randint(1, info["uakyty"]), "минут")
+        if not tapsyrys:
+            print("Ешқандай тағам таңдалмады. Қайта енгізіңіз.")
+            continue
+
+        print("\nСіздің тапсырысыңыз:")
+        for t in tapsyrys:
+            print("-", t[0], "-", t[1], "ккал -", t[3], "тг")
+
+        rastau = input("Тапсырысты растау керек пе? (иә/жоқ): ").lower()
+        if rastau == "иә":
+            nomer = str(random.randint(1000, 9999))
+            # Дайындалу уақыты 5-15 минут
+            dayyndau_uakyty = random.randint(5, 15)
+            add_record(tapsyrys_tarihy, nomer, {
+                "tagamdar": [(t[0], t[3]) for t in tapsyrys],
+                "baga": baga,
+                "uakyty": dayyndau_uakyty
+            })
+            save_to_file()
+            print(f"Тапсырыс қабылданды! Нөмірі: {nomer}, Жалпы баға: {baga} тг")
+            print(f"Дайындалу уақыты: {dayyndau_uakyty} минут")  # Тапсырыс бергенде шығады
+            break
         else:
-            print("Мұндай тапсырыс табылмады.")
+            print("Тапсырыс беруді болдырмаймыз. Мәзірге қайта ораламыз.")
+            break
+def tapsyrys_koru():
+    nomer = input("Тапсырыс нөмірін енгізіңіз: ")
+    if nomer in tapsyrys_tarihy:
+        info = tapsyrys_tarihy[nomer]
+        print("Тапсырыс №", nomer)
+        for t, b in info["tagamdar"]:
+            print("-", t, "-", b, "тг")
+        print("Жалпы баға:", info["baga"])
+        # Қалған уақытты кездейсоқ шығару
+        remaining = random.randint(1, info["uakyty"])
+        print(f"Қалған уақыт шамамен: {remaining} минут")
     else:
-        print("Қате нөмір енгізілді.")
+        print("Мұндай тапсырыс жоқ.")
+
+
+def tapsyrys_ozh():
+    nomer = input("Жою үшін тапсырыс нөмірін енгізіңіз: ")
+    if nomer in tapsyrys_tarihy:
+        delete_record(tapsyrys_tarihy, nomer)
+        save_to_file()
+        print("Тапсырыс жойылды.")
+    else:
+        print("Мұндай тапсырыс жоқ.")
+
+load_from_file()
 
 while True:
     print("\n^ Басты мәзір ^")
-    print("1. Меню көру")
-    print("2. Тапсырыс беру")
-    print("3. Тапсырысты көру")
-    print("4. Шығу")
+    print("1. Барлық мәзірді көру")
+    print("2. Тағам іздеу")
+    print("3. Тапсырыс беру")
+    print("4. Тапсырысты көру")
+    print("5. Тапсырысты жою")
+    print("6. Барлық тапсырыстар")
+    print("7. Шығу")
 
-    tandau = input("Таңдауыңызды енгізіңіз: ")
-
-    if tandau == "1":
-        print("\nАс мәзірі:")
-        for i, tagam in enumerate(MENYU, 1):
-            print(i, tagam[0], "-", tagam[1], "kkal", "-", tagam[3], "tg", "| Құрамы:", tagam[2])
-
-    elif tandau == "2":
-        tapsyrys_beru()
-
-    elif tandau == "3":
+    choice = input("Таңдауыңызды енгізіңіз: ")
+    if choice == "1":
+        bar_menudy_koru()
+    elif choice == "2":
+        tagam_izdeu()
+    elif choice == "3":
+        tapsyrys_qosu()
+    elif choice == "4":
         tapsyrys_koru()
-
-    elif tandau == "4":
-        print("Рахмет! Келесі жолы күтеміз!")
+    elif choice == "5":
+        tapsyrys_ozh()
+    elif choice == "6":
+        for k, v in tapsyrys_tarihy.items():
+            print("№", k, ":", v)
+    elif choice == "7":
+        print("Бағдарлама аяқталды.")
         break
-
     else:
-        print("Қате таңдау. Қайта енгізіңіз.")
-
+        print("Қате таңдау")
