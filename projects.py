@@ -1,29 +1,50 @@
-
 import random
+import matplotlib.pyplot as plt
 from utils import add_record, delete_record
 
 FILENAME = "data.txt"
 
-MENYU = (
-    ("Протеинді смузи", 180, "сүт, протеин, банан", 1200),
-    ("Жасыл смузи", 150, "шпинат, алма, киви", 1100),
-    ("Омлет ақуыздан", 200, "жұмыртқа ақуызы, көкөніс", 1000),
-    ("Тауық еті мен көкөніс", 350, "тауық, брокколи, сәбіз", 1800),
-    ("Киноа салаты", 250, "киноа, авокадо, қызанақ", 1500),
-    ("Жеміс салаты", 120, "банан, алма, киви", 900),
-    ("Таңғы ас коктейлі", 220, "сүт, сұлы, жидектер", 1300),
-    ("Йогурт + жидектер", 180, "йогурт, малина, қарақат", 1200),
-    ("Тауық салаты", 300, "тауық, көкөніс, авокадо", 1700),
-    ("Күріш пен балық", 400, "күріш, балық, көкөніс", 2200),
-    ("Тауық филе стейк", 360, "тауық, дәмдеуіштер", 2000),
-    ("Қарақұмық салаты", 220, "қарақұмық, көкөніс, қызанақ", 1400),
-    ("Протеинді печенье", 150, "жұмыртқа, протеин, сұлы", 800),
-    ("Сорпа көкөніс", 180, "қырыққабат, сәбіз, пияз", 900),
-    ("Көкөніс омлет", 200, "жұмыртқа, көкөніс", 1100),
-    ("Тауық бутерброд", 250, "тауық, нан, көкөніс", 1300),
-    ("Авокадо салаты", 230, "авокадо, көкөніс, лимон", 1500),
-    ("Йогурт смузи", 190, "йогурт, банан, жидектер", 1200)
-)
+class Food:
+    def __init__(self, name, calories, protein, fat, carbs, price):
+        self.name = name
+        self.calories = calories
+        self.protein = protein
+        self.fat = fat
+        self.carbs = carbs
+        self.price = price
+
+    def info(self):
+        return f"{self.name}: {self.calories} ккал, {self.protein}г ақуыз, {self.fat}г май, {self.carbs}г көмірсу, {self.price}тг"
+
+class SpecialFood(Food):
+    def __init__(self, name, calories, protein, fat, carbs, price):
+        super().__init__(name, calories, protein, fat, carbs, price)
+
+
+    def info(self):
+        return super().info()
+
+
+MENYU = [
+    Food("Протеинді смузи", 180, 20, 5, 25, 1200),
+    Food("Жасыл смузи", 150, 5, 2, 30, 1100),
+    Food("Омлет ақуыздан", 200, 15, 10, 5, 1000),
+    Food("Тауық еті мен көкөніс", 350, 30, 10, 40, 1800),
+    Food("Киноа салаты", 250, 8, 12, 35, 1500),
+    Food("Жеміс салаты", 120, 2, 1, 28, 900),
+    Food("Таңғы ас коктейлі", 220, 12, 4, 32, 1300),
+    Food("Йогурт + жидектер", 180, 10, 3, 20, 1200),
+    Food("Тауық салаты", 300, 25, 8, 15, 1700),
+    Food("Күріш пен балық", 400, 35, 12, 50, 2200),
+    Food("Тауық филе стейк", 360, 32, 10, 10, 2000),
+    Food("Қарақұмық салаты", 220, 10, 8, 30, 1400),
+    Food("Протеинді печенье", 150, 15, 5, 10, 800),
+    Food("Сорпа көкөніс", 180, 5, 2, 15, 900),
+    Food("Көкөніс омлет", 200, 12, 8, 5, 1100),
+    Food("Тауық бутерброд", 250, 20, 5, 25, 1300),
+    Food("Авокадо салаты", 230, 8, 12, 20, 1500),
+    Food("Йогурт смузи", 190, 10, 3, 25, 1200)
+]
 
 tapsyrys_tarihy = {}
 
@@ -31,7 +52,10 @@ def load_from_file():
     try:
         with open(FILENAME, "r", encoding="utf-8") as f:
             for line in f:
-                key, tagam_str, baga = line.strip().split("|")
+                parts = line.strip().split("|")
+                if len(parts) != 3:
+                    continue
+                key, tagam_str, baga = parts
                 tagamdar = [tuple(t.split(",")) for t in tagam_str.split(";")]
                 tapsyrys_tarihy[key] = {"tagamdar": tagamdar, "baga": int(baga)}
     except FileNotFoundError:
@@ -40,60 +64,33 @@ def load_from_file():
 def save_to_file():
     with open(FILENAME, "w", encoding="utf-8") as f:
         for key, val in tapsyrys_tarihy.items():
-            tagam_str = ";".join([f"{t[0]},{t[1]}" for t in val["tagamdar"]])
+            tagam_str_list = []
+            for t in val["tagamdar"]:
+                # 5 элемент болмаса 0 қосамыз
+                t_extended = list(t) + [0]*(5-len(t))
+                tagam_str_list.append(",".join(map(str, t_extended)))
+            tagam_str = ";".join(tagam_str_list)
             f.write(f"{key}|{tagam_str}|{val['baga']}\n")
 
 def bar_menudy_koru():
     print("\nБарлық мәзір:")
     for i, t in enumerate(MENYU, 1):
-        print(f"{i}. {t[0]} - {t[1]} ккал - {t[3]} тг | Құрамы: {t[2]}")
+        print(f"{i}. {t.info()}")
+
 
 def tagam_izdeu():
     soz = input("Ізделетін тағамның атын немесе түрін жазыңыз: ").lower()
     tabylgan = []
     for i, t in enumerate(MENYU, 1):
-        if soz in t[0].lower() or soz in t[2].lower():
+        if soz in t.name.lower():
             tabylgan.append((i, t))
     if tabylgan:
         print("Табылған тағамдар:")
         for i, t in tabylgan:
-            print(f"{i}. {t[0]} - {t[1]} ккал - {t[3]} тг | Құрамы: {t[2]}")
+            print(f"{i}. {t.info()}")
     else:
         print("Мұндай тағам табылмады.")
 
-def tapsyrys_qosu():
-    while True:
-        bar_menudy_koru()
-        nums = input("Таңдаған тағамдардың нөмірін үтір арқылы жазыңыз: ").split(",")
-        tapsyrys = []
-        baga = 0
-        for n in nums:
-            try:
-                idx = int(n.strip()) - 1
-                if 0 <= idx < len(MENYU):
-                    tapsyrys.append(MENYU[idx])
-                    baga += MENYU[idx][3]
-            except:
-                continue
-
-        if not tapsyrys:
-            print("Ешқандай тағам таңдалмады. Қайта енгізіңіз.")
-            continue
-
-        print("\nСіздің тапсырысыңыз:")
-        for t in tapsyrys:
-            print("-", t[0], "-", t[1], "ккал -", t[3], "тг")
-
-        rastau = input("Тапсырысты растау керек пе? (иә/жоқ): ").lower()
-        if rastau == "иә":
-            nomer = str(random.randint(1000, 9999))
-            add_record(tapsyrys_tarihy, nomer, {"tagamdar": [(t[0], t[3]) for t in tapsyrys], "baga": baga})
-            save_to_file()
-            print(f"Тапсырыс қабылданды! Нөмірі: {nomer}, Жалпы баға: {baga} тг")
-            break
-        else:
-            print("Тапсырыс беруді болдырмаймыз. Мәзірге қайта ораламыз.")
-            break
 
 def tapsyrys_qosu():
     while True:
@@ -106,7 +103,7 @@ def tapsyrys_qosu():
                 idx = int(n.strip()) - 1
                 if 0 <= idx < len(MENYU):
                     tapsyrys.append(MENYU[idx])
-                    baga += MENYU[idx][3]
+                    baga += MENYU[idx].price
             except:
                 continue
 
@@ -116,39 +113,65 @@ def tapsyrys_qosu():
 
         print("\nСіздің тапсырысыңыз:")
         for t in tapsyrys:
-            print("-", t[0], "-", t[1], "ккал -", t[3], "тг")
+            print("-", t.info())
 
         rastau = input("Тапсырысты растау керек пе? (иә/жоқ): ").lower()
         if rastau == "иә":
             nomer = str(random.randint(1000, 9999))
-            # Дайындалу уақыты 5-15 минут
             dayyndau_uakyty = random.randint(5, 15)
             add_record(tapsyrys_tarihy, nomer, {
-                "tagamdar": [(t[0], t[3]) for t in tapsyrys],
+                "tagamdar": [(t.name, t.price, t.protein, t.fat, t.carbs) for t in tapsyrys],
                 "baga": baga,
                 "uakyty": dayyndau_uakyty
             })
             save_to_file()
-            print(f"Тапсырыс қабылданды! Нөмірі: {nomer}, Жалпы баға: {baga} тг")
-            print(f"Дайындалу уақыты: {dayyndau_uakyty} минут")  # Тапсырыс бергенде шығады
+            print(f"\nТапсырыс қабылданды! Нөмірі: {nomer}, Жалпы баға: {baga} тг")
+            print(f"Дайындалу уақыты: {dayyndau_uakyty} минут")
             break
         else:
             print("Тапсырыс беруді болдырмаймыз. Мәзірге қайта ораламыз.")
             break
+
+def show_graph():
+    nomer = input("График шығару үшін тапсырыс нөмірін енгізіңіз: ")
+    if nomer not in tapsyrys_tarihy:
+        print("Мұндай тапсырыс жоқ.")
+        return
+
+    info = tapsyrys_tarihy[nomer]
+    tagamdar = info["tagamdar"]  
+
+    total_protein = sum([int(t[2]) for t in tagamdar])
+    total_fat = sum([int(t[3]) for t in tagamdar])
+    total_carbs = sum([int(t[4]) for t in tagamdar])
+    total_calories = sum([int(t[2])*4 + int(t[3])*9 + int(t[4])*4 for t in tagamdar])
+
+    labels = ["Ақуыз (г)", "Май (г)", "Көмірсу (г)"]
+    values = [total_protein, total_fat, total_carbs]
+
+    plt.figure(figsize=(6, 6))
+    colors = ["#9AE3CA", "#EDE69A", "#CAABED"]
+    explode = (0.05, 0.05, 0.05)
+    plt.pie(values, labels=labels,
+            autopct=lambda p: f"{p:.1f}%\n({int(p*sum(values)/100)}г)",
+            startangle=140, shadow=True, explode=explode, colors=colors)
+
+    plt.title(f"Сіздің таңдаған тағамдарыңыздың ақуыз, май, көмірсу үлесі\nЖалпы калория: {total_calories} ккал", fontsize=14)
+    plt.show()
+
+
 def tapsyrys_koru():
     nomer = input("Тапсырыс нөмірін енгізіңіз: ")
     if nomer in tapsyrys_tarihy:
         info = tapsyrys_tarihy[nomer]
         print("Тапсырыс №", nomer)
-        for t, b in info["tagamdar"]:
-            print("-", t, "-", b, "тг")
+        for t in info["tagamdar"]:
+            print(f"- {t[0]}: {t[2]}г ақуыз, {t[3]}г май, {t[4]}г көмірсу, {t[1]}тг")
         print("Жалпы баға:", info["baga"])
-        # Қалған уақытты кездейсоқ шығару
         remaining = random.randint(1, info["uakyty"])
         print(f"Қалған уақыт шамамен: {remaining} минут")
     else:
         print("Мұндай тапсырыс жоқ.")
-
 
 def tapsyrys_ozh():
     nomer = input("Жою үшін тапсырыс нөмірін енгізіңіз: ")
@@ -158,6 +181,7 @@ def tapsyrys_ozh():
         print("Тапсырыс жойылды.")
     else:
         print("Мұндай тапсырыс жоқ.")
+
 
 load_from_file()
 
@@ -169,7 +193,8 @@ while True:
     print("4. Тапсырысты көру")
     print("5. Тапсырысты жою")
     print("6. Барлық тапсырыстар")
-    print("7. Шығу")
+    print("7. График шығару")
+    print("8. Шығу")
 
     choice = input("Таңдауыңызды енгізіңіз: ")
     if choice == "1":
@@ -186,6 +211,8 @@ while True:
         for k, v in tapsyrys_tarihy.items():
             print("№", k, ":", v)
     elif choice == "7":
+        show_graph()
+    elif choice == "8":
         print("Бағдарлама аяқталды.")
         break
     else:
